@@ -123,11 +123,25 @@ VALUES
 SELECT libros.titulo, autores.nombre AS autor 
 FROM libros 
 JOIN autores ON libros.id_autor = autores.id_autor;
+              titulo               |         autor
+-----------------------------------+------------------------
+ Cien años de soledad              | Gabriel García Márquez
+ El amor en los tiempos del cólera | Gabriel García Márquez
+ Ficciones                         | Jorge Luis Borges
+ El Aleph                          | Jorge Luis Borges
+ Don Quijote de la Mancha          | Miguel de Cervantes
+ Rebelión en la granja             | George Orwell
+ Rayuela                           | Julio Cortázar
+(7 rows)
 ```
 - Mostrar los préstamos que aún no tienen fecha de devolución:
 ```sql
 SELECT * FROM prestamos 
 WHERE fecha_devolucion IS NULL;
+ id_prestamo | id_libro | fecha_prestamo | fecha_devolucion | usuario_prestatario
+-------------+----------+----------------+------------------+---------------------
+           5 |        8 | 2026-09-12     |                  | Carlos
+(1 row) (el resultado lo puse después de editar la tabla porque se me olvidó hacerlo previamente)
 ```
 - Obtener los autores que tienen más de un libro registrado:
 ```sql
@@ -136,6 +150,11 @@ FROM autores
 JOIN libros ON autores.id_autor = libros.id_autor 
 GROUP BY autores.id_autor, autores.nombre 
 HAVING COUNT(libros.id_libro) > 1;
+         nombre         | numero_libros
+------------------------+---------------
+ Jorge Luis Borges      |             2
+ Gabriel García Márquez |             2
+(2 rows)
 ```
 ### 6. Consultas con agregación
 
@@ -143,12 +162,23 @@ HAVING COUNT(libros.id_libro) > 1;
 ```sql
 SELECT COUNT(*) AS total_prestamos 
 FROM prestamos;
+ total_prestamos
+-----------------
+               4
+(1 row)
 ```
 - Obtener el número de libros prestados por cada usuario.
 ```sql
 SELECT usuario_prestatario, COUNT(id_libro) AS total_libros_prestados 
 FROM prestamos 
 GROUP BY usuario_prestatario;
+ usuario_prestatario | total_libros_prestados
+---------------------+------------------------
+ Marcos              |                      1
+ Carlos              |                      1
+ Ana                 |                      1
+ Luis                |                      1
+(4 rows)
 ```
 ### 7. Modificación de datos
 
@@ -207,6 +237,12 @@ JOIN prestamos p ON l.id_libro = p.id_libro
 GROUP BY l.id_libro, l.titulo
 ORDER BY numero_prestamos DESC
 LIMIT 3;
+              titulo               | numero_prestamos
+-----------------------------------+------------------
+ Ficciones                         |                1
+ El amor en los tiempos del cólera |                1
+ Cien años de soledad              |                1
+(3 rows)
 ```
 ### 10. Exportación e importación de datos
 

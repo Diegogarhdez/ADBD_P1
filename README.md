@@ -124,12 +124,12 @@ SELECT libros.titulo, autores.nombre AS autor
 FROM libros 
 JOIN autores ON libros.id_autor = autores.id_autor;
 ```
-Mostrar los préstamos que aún no tienen fecha de devolución:
+- Mostrar los préstamos que aún no tienen fecha de devolución:
 ```sql
 SELECT * FROM prestamos 
 WHERE fecha_devolucion IS NULL;
 ```
-Obtener los autores que tienen más de un libro registrado:
+- Obtener los autores que tienen más de un libro registrado:
 ```sql
 SELECT autores.nombre, COUNT(libros.id_libro) AS numero_libros 
 FROM autores 
@@ -137,4 +137,88 @@ JOIN libros ON autores.id_autor = libros.id_autor
 GROUP BY autores.id_autor, autores.nombre 
 HAVING COUNT(libros.id_libro) > 1;
 ```
+### 6. Consultas con agregación
 
+- Calcular el número total de préstamos realizados.
+```sql
+SELECT COUNT(*) AS total_prestamos 
+FROM prestamos;
+```
+- Obtener el número de libros prestados por cada usuario.
+```sql
+SELECT usuario_prestatario, COUNT(id_libro) AS total_libros_prestados 
+FROM prestamos 
+GROUP BY usuario_prestatario;
+```
+### 7. Modificación de datos
+
+- Actualizar la fecha de devolución de un préstamo pendiente.
+```sql
+UPDATE prestamos
+SET fecha_devolucion = '2026-09-20'
+WHERE usuario_prestatario = 'Ana' AND fecha_devolucion IS NULL;
+```
+- Eliminar un libro y comprobar el efecto en la tabla de préstamos (usar ON DELETE CASCADE o justificar el comportamiento). (ya se hace por la definición de la tabla)
+```sql
+DELETE FROM libros 
+WHERE id_libro = 6;
+```
+### 8. Creación de vistas
+
+- Crear una vista llamada vista_libros_prestados que muestre: título del libro, autor y nombre del prestatario.
+```sql
+CREATE VIEW vista_libros_prestados AS
+SELECT 
+    l.titulo AS titulo_libro, 
+    a.nombre AS autor, 
+    p.usuario_prestatario
+FROM 
+    prestamos p
+JOIN 
+    libros l ON p.id_libro = l.id_libro
+JOIN 
+    autores a ON l.id_autor = a.id_autor;
+```
+- Conceder permisos de consulta sobre esta vista únicamente a usuario_biblio.
+```sql
+REVOKE ALL ON vista_libros_prestados FROM PUBLIC;
+GRANT SELECT ON vista_libros_prestados TO usuario_biblio;
+```
+### 9. Funciones y consultas avanzadas
+
+- Crear una función que reciba el nombre de un autor y devuelva todos los libros escritos por él.
+```sql
+CREATE OR REPLACE FUNCTION obtener_libros_autor(p_nombre_autor VARCHAR)
+RETURNS TABLE (titulo_libro VARCHAR) AS $$
+BEGIN
+    RETURN QUERY 
+    SELECT l.titulo::VARCHAR
+    FROM libros l
+    JOIN autores a ON l.id_autor = a.id_autor
+    WHERE a.nombre = p_nombre_autor;
+END;
+$$ LANGUAGE plpgsql;
+```
+- Crear una consulta que devuelva los tres libros más prestados.
+```sql
+SELECT l.titulo, COUNT(p.id_prestamo) AS numero_prestamos
+FROM libros l
+JOIN prestamos p ON l.id_libro = p.id_libro
+GROUP BY l.id_libro, l.titulo
+ORDER BY numero_prestamos DESC
+LIMIT 3;
+```
+### 10. Exportación e importación de datos
+
+- Exportar el contenido de la tabla libros a un archivo CSV.
+```sql
+\copy libros TO '/tmp/libros.csv' CSV HEADER;
+```
+- Importar datos adicionales de autores desde un archivo CSV externo.
+```sql
+\copy autores(nombre, nacionalidad) FROM '/tmp/nuevos_autores.csv' CSV HEADER;
+```
+nombre,nacionalidad
+Isabel Allende,Chilena
+Mario Vargas Llosa,Peruana
+J.K. Rowling,Británica
